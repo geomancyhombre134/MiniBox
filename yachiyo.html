@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硬切抚摸模拟器</title>
+    <style>
+        :root {
+            /* 必须强制纯黑，这是 JPG 黑底无缝融合的核心逻辑 */
+            --bg-color: #000000; 
+            --text-color: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--text-color);
+            overflow: hidden;
+            user-select: none; /* 防止频繁点击选中文本 */
+            -webkit-user-select: none;
+        }
+
+        #simulatorArea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        #petCanvas {
+            background-color: transparent;
+            cursor: pointer;
+            transition: transform 0.08s ease-out; /* 极短的过渡时间，增强打击感 */
+            max-width: 100vw;
+            max-height: 80vh;
+            object-fit: contain;
+            /* 利用滤镜增加一点点画面质感 */
+            filter: contrast(1.02) saturate(1.05);
+        }
+
+        /* 物理按压反馈：用缩放掩盖硬切的突兀感 */
+        #petCanvas:active {
+            transform: scale(0.96); 
+        }
+
+        .ui-layer {
+            position: absolute;
+            bottom: -60px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .counter {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(236, 72, 153, 0.5); /* 粉色发光字 */
+            letter-spacing: 2px;
+        }
+
+        .hint {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="simulatorArea">
+        <canvas id="petCanvas" width="800" height="800"></canvas>
+        <div class="ui-layer">
+            <div class="counter">抚摸次数：<span id="petCount">0</span></div>
+            <div class="hint">点击或触摸屏幕进行互动</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('petCanvas');
+        const ctx = canvas.getContext('2d');
+        const countDisplay = document.getElementById('petCount');
+
+        let petCount = 0;
+        let isHappy = false;
+        let particles = [];
+        
+        const imgNormal = new Image();
+        const imgHappy = new Image();
+        let imagesLoaded = 0;
+        let hasError = false;
+
+        // 【依赖注入】此处声明图片路径 (已改回本地标准命名)
+        const NORMAL_SRC = 'https://images.cnblogs.com/cnblogs_com/tfyzs/2498192/o_260318143035_57fbd0abf0caeb8c3d226251265d27ab.png'; 
+        const HAPPY_SRC = 'https://images.cnblogs.com/cnblogs_com/tfyzs/2498192/o_260318143013_6f255642eef89af1f261f6fbbfd7c208.png'; 
+
+        // 资源加载追踪
+        function trackLoad() {
+            imagesLoaded++;
+            if (imagesLoaded === 2) {
+                // 以 Normal 图的真实比例初始化画布尺寸
+                canvas.width = imgNormal.naturalWidth || 800;
+                canvas.height = imgNormal.naturalHeight || 800;
+            }
+        }
+
+        function trackError() {
+            hasError = true;
+        }
+
+        imgNormal.onload = trackLoad;
+        imgNormal.onerror = trackError;
+        imgHappy.onload = trackLoad;
+        imgHappy.onerror = trackError;
+
+        imgNormal.src = NORMAL_SRC;
+        imgHappy.src = HAPPY_SRC;
+
+        // 核心渲染逻辑
+        function drawCharacter() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 异常捕获：如果用户没有正确放置图片
+            if (hasError) {
+                ctx.fillStyle = '#ef4444';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('图片加载失败！', canvas.width / 2, canvas.height / 2 - 20);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '16px Arial';
+                ctx.fillText('请确保已将图片重命名为 https://images.cnblogs.com/cnblogs_com/tfyzs/2498192/o_260318143035_57fbd0abf0caeb8c3d226251265d27ab.png 和 https://images.cnblogs.com/cnblogs_com/tfyzs/2498192/o_260318143013_6f255642eef89af1f261f6fbbfd7c208.png', canvas.width / 2, canvas.height / 2 + 20);
+                ctx.fillText('并与此 HTML 文件放在同一个文件夹内。', canvas.width / 2, canvas.height / 2 + 50);
+                return;
+            }
+
+            if (imagesLoaded < 2) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('载入中...', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // 状态机：硬切渲染
+            const currentImg = isHappy ? imgHappy : imgNormal;
+            ctx.drawImage(currentImg, 0, 0, canvas.width, canvas.height);
+        }
+
+        // 粒子系统：生成视觉扰动，掩盖帧的不连贯
+        function createParticle() {
+            const texts = ["❤️", "✨", "💕"];
+            particles.push({
+                x: canvas.width * 0.3 + Math.random() * (canvas.width * 0.4), // 限制在人物脸部宽度内生成
+                y: canvas.height * 0.4 + Math.random() * 50,
+                vx: (Math.random() - 0.5) * 6,
+                vy: -Math.random() * 5 - 4, // 向上加速漂浮
+                alpha: 1,
+                size: 40 + Math.random() * 30, // 巨大的粒子增强视觉冲击
+                text: texts[Math.floor(Math.random() * texts.length)],
+                rotation: (Math.random() - 0.5) * Math.PI / 4 // 随机轻微旋转
+            });
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02; // 生命周期大约 50 帧
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.font = `bold ${p.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // 绘制带阴影的粒子，防止融入背景
+                ctx.shadowColor = 'rgba(255,255,255,0.5)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(p.text, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        // 事件侦听与交互防抖
+        let interactTimer = null;
+
+        function triggerInteraction() {
+            if (imagesLoaded < 2 || hasError) return;
+
+            petCount++;
+            countDisplay.innerText = petCount;
+            
+            isHappy = true;
+            createParticle();
+            createParticle(); // 双倍粒子
+
+            // 清除旧的定时器，允许连续高频点击而不卡住状态
+            if (interactTimer) clearTimeout(interactTimer);
+            
+            interactTimer = setTimeout(() => {
+                isHappy = false;
+            }, 350); // 350ms 的反馈时间恰到好处，太长显得反应迟钝，太短看不清图二
+        }
+
+        canvas.addEventListener('mousedown', triggerInteraction);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            triggerInteraction();
+        }, { passive: false });
+
+        // 主循环
+        function animate() {
+            drawCharacter();
+            updateParticles();
+            drawParticles();
+            requestAnimationFrame(animate);
+        }
+
+        // 启动引擎
+        animate();
+    </script>
+</body>
+</html>
