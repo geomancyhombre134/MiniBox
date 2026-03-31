@@ -344,20 +344,136 @@ gsv/
 | **GND** | INMP441 GND/L/R, MAX98357A GND | 共地 |
 | **USB** | 电脑 / 充电宝 | 5V 供电 & 烧录 |
 
-### 固件烧录
+### 固件烧录（详细教程）
 
-1. 安装 [VSCode](https://code.visualstudio.com/) + [PlatformIO 插件](https://platformio.org/install/ide?install=vscode)
+#### 方式 A：PlatformIO CLI 命令行烧录（推荐）
+
+无需 VSCode 插件，直接用命令行编译烧录，兼容性最好。
+
+**1. 安装 Python 和 PlatformIO**
+
+```bash
+# 安装 Python 3.10+（如已安装可跳过）
+# Windows: https://www.python.org/downloads/
+
+# 安装 PlatformIO CLI
+pip install platformio
+```
+
+**2. 修改配置文件**
+
+编辑 `esp32/minibox_firmware/src/config.h`：
+
+```cpp
+// WiFi 配置 — 改为你的实际网络（必须是 2.4GHz WiFi，ESP32 不支持 5GHz）
+#define WIFI_SSID     "your_wifi_ssid"
+#define WIFI_PASSWORD "your_wifi_password"
+
+// PC 服务器地址 — 改为运行 webui.py 的电脑局域网 IP
+// Windows 查看方法：CMD 输入 ipconfig，找到 IPv4 地址
+#define SERVER_HOST   "192.168.1.100"
+#define SERVER_PORT   7860
+```
+
+**3. USB 连接 ESP32-S3**
+
+- 使用**数据线**（不是充电线！能给手机传文件的那种）
+- 如果板子有两个 USB-C 口，插标注 **UART / COM** 的那个
+- 插入后系统应识别出新的 COM 端口（Windows 设备管理器 → 端口）
+
+> **没有识别到 COM 口？** 可能需要安装 CH340 驱动：[CH340 驱动下载](http://www.wch.cn/downloads/CH341SER_EXE.html)
+
+**4. 编译 & 烧录**
+
+```bash
+cd esp32/minibox_firmware
+
+# 自动编译并烧录（PlatformIO 会自动检测 COM 口）
+pio run --target upload
+
+# 如果有多个 COM 口，手动指定：
+pio run --target upload --upload-port COM3    # Windows
+pio run --target upload --upload-port /dev/ttyUSB0  # Linux/Mac
+```
+
+> 首次编译会自动下载 ESP32 工具链（约 500MB），需要等待几分钟。
+
+**5. 查看串口日志**
+
+```bash
+pio device monitor --baud 115200
+```
+
+正常启动日志：
+
+```
+=============================
+  MiniBox ESP32-S3 Firmware
+=============================
+  MAC: DC:B4:D9:14:49:40        ← 你的 MAC 地址（企业 WiFi 可能需要报备）
+[MEM] Audio buffer: 256000 bytes in PSRAM
+[WIFI] Connected! IP: 192.168.1.xxx
+[MIC] I2S microphone initialized
+[SPK] I2S speaker initialized
+[READY] Press and hold button to talk!
+```
+
+**6. 开始使用**
+
+- 确保 PC 端 `webui.py` 已启动
+- ESP32 和 PC 在同一局域网
+- **按住 BOOT 按钮说话，松开等回复**
+
+#### 方式 B：VSCode + PlatformIO 插件烧录
+
+1. 安装 [VSCode](https://code.visualstudio.com/) + [PlatformIO IDE 插件](https://platformio.org/install/ide?install=vscode)
 2. 用 VSCode 打开 `esp32/minibox_firmware/` 文件夹
-3. 编辑 `src/config.h`，填入 WiFi 和 PC 服务器 IP：
-   ```cpp
-   #define WIFI_SSID     "your_wifi"
-   #define WIFI_PASSWORD "your_password"
-   #define SERVER_HOST   "192.168.1.100"  // 运行 webui.py 的电脑 IP
-   #define SERVER_PORT   7860
-   ```
-4. USB 连接 ESP32-S3，点击 PlatformIO 的 **Upload** 按钮烧录
-5. 确保 PC 端 `webui.py` 已启动，ESP32 和 PC 在同一局域网
-6. **按住按钮说话，松开等回复**
+3. 修改 `src/config.h`（同上）
+4. 点击底部状态栏的 **→（Upload）** 按钮编译烧录
+5. 点击 **🔌（Serial Monitor）** 按钮查看日志
+
+#### 烧录常见问题
+
+<details>
+<summary><b>COM 口识别不到</b></summary>
+
+- 换一根 USB **数据线**（很多线只能充电不能传数据，这是最常见的坑）
+- 安装 [CH340 驱动](http://www.wch.cn/downloads/CH341SER_EXE.html)（适用于带 CH340 芯片的开发板）
+- 如果板子有两个 USB 口，试试另一个
+</details>
+
+<details>
+<summary><b>烧录失败 / 连接超时</b></summary>
+
+手动进入下载模式：按住 **BOOT** 按钮 → 按一下 **RST** 按钮松开 → 松开 **BOOT** → 重新烧录
+</details>
+
+<details>
+<summary><b>WiFi 连接失败（FAILED → 自动重启）</b></summary>
+
+- 确认 WiFi 名称和密码正确（区分大小写）
+- 确认是 **2.4GHz** WiFi（ESP32 不支持 5GHz）
+- 企业 WiFi 可能需要先将 ESP32 的 MAC 地址加入白名单（MAC 地址在启动日志中打印）
+</details>
+
+<details>
+<summary><b>能连 WiFi 但按按钮没反应</b></summary>
+
+- 检查 `config.h` 中的 `SERVER_HOST` 是否为 PC 的正确局域网 IP
+- 确认 PC 端 `webui.py` 已启动且监听在 `0.0.0.0:7860`
+- 检查 Windows 防火墙是否放行了 7860 端口
+- 确认 ESP32 和 PC 在同一网段（IP 前三段相同）
+</details>
+
+### LED 指示灯
+
+| 颜色 | 状态 |
+|:---|:---|
+| 绿色闪一下 | 启动成功 |
+| 红色常亮 | 正在录音 |
+| 蓝色常亮 | 上传中 / 等待服务器回复 |
+| 绿色常亮 | 正在播放语音回复 |
+| 灯灭 | 空闲待命 |
 
 ### PC 端 API
 
