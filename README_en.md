@@ -10,6 +10,16 @@ Supports real-time conversations via PC web browser, and can also be embedded in
 
 ---
 
+## Demo
+
+### 🖥️ PC Control Panel Demo
+
+https://github.com/Iroha-P/MiniBox/raw/main/demo_pc.mp4
+
+> 📦 Hardware (ESP32 figure) demo video coming soon. A full demo will be edited and uploaded to [Bilibili](https://www.bilibili.com/).
+
+---
+
 ## Features
 
 - **Character Voice Dialogue** — High-quality realistic voice generation (Japanese/Chinese) using character models trained with GPT-SoVITS

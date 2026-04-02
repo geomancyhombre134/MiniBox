@@ -10,6 +10,16 @@
 
 ---
 
+## Demo / 演示视频
+
+### 🖥️ PC 控制端演示
+
+https://github.com/Iroha-P/MiniBox/raw/main/demo_pc.mp4
+
+> 📦 硬件端（ESP32 手办）演示视频后续更新。完整演示视频将剪辑后上传至 [Bilibili](https://www.bilibili.com/)。
+
+---
+
 ## Features / 功能亮点
 
 - **角色语音对话** — 基于 GPT-SoVITS 训练的角色模型，生成高质量拟真语音（日语/中文）
