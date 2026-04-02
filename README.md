@@ -208,46 +208,55 @@ python webui.py
 
 **服务商 + API 地址速查表：**
 
-| 服务商 | `LLM_BASE_URL` | 注册地址 |
-|--------|---------|---------|
-| **OpenAI** | `https://api.openai.com/v1` | [platform.openai.com](https://platform.openai.com) |
-| **DeepSeek** | `https://api.deepseek.com/v1` | [platform.deepseek.com](https://platform.deepseek.com) |
-| **硅基流动** | `https://api.siliconflow.cn/v1` | [siliconflow.cn](https://siliconflow.cn) |
-| **通义千问** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| **MiniMax** | `https://api.minimaxi.chat/v1` | [minimaxi.com](https://www.minimaxi.com/) |
-| **Ollama（本地）** | `http://127.0.0.1:11434/v1` | 无需注册 |
+| 服务商 | `LLM_BASE_URL` | 可用模型 | 注册地址 |
+|--------|---------|---------|---------|
+| **OpenAI** | `https://api.openai.com/v1` | GPT-5.4 / GPT-5.4 mini 等 | [platform.openai.com](https://platform.openai.com) |
+| **DeepSeek** | `https://api.deepseek.com/v1` | DeepSeek V3 / R1 | [platform.deepseek.com](https://platform.deepseek.com) |
+| **硅基流动** | `https://api.siliconflow.cn/v1` | Qwen3 / DeepSeek / GLM 等开源模型 | [siliconflow.cn](https://siliconflow.cn) |
+| **通义千问** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Qwen 系列 | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
+| **Ollama（本地）** | `http://127.0.0.1:11434/v1` | 所有本地部署模型 | 无需注册 |
+| ⭐ **OpenRouter** | `https://openrouter.ai/api/v1` | **全部！GPT / Claude / Gemini / DeepSeek 等 300+ 模型** | [openrouter.ai](https://openrouter.ai) |
+
+> **重要说明**：每个服务商只能调用**自家的模型**。例如 OpenAI 的 API 不能调 Claude，Anthropic 的 API 也不能调 GPT。
+> 如果你想**一个 Key 用遍所有模型**（GPT、Claude、Gemini、DeepSeek 全部），推荐使用 **[OpenRouter](https://openrouter.ai)** — 它是 OpenAI 兼容的聚合网关，注册即用。
 
 ### 📋 模型推荐（按使用场景分类）
 
 #### ⚡ 快速响应型 — 日常对话首选，延迟低、成本低
 
-| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
-|------|----------------|--------|------|
-| **GPT-4o mini** | `gpt-4o-mini` | OpenAI | 极快，质量稳定，性价比之王 |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 极快，中文优秀，价格极低（¥1/百万 token） |
-| **Qwen Turbo** | `qwen-turbo` | 通义千问 | 快速，中文原生，阿里云免费额度大 |
-| **GLM-4-Flash** | `glm-4-flash` | 智谱 AI | 快速，免费额度，中文友好 |
-| **Gemini 2.0 Flash** | `gemini-2.0-flash` | Google | 极快，多模态，免费额度充足 |
+| 模型 | `LLM_MODEL` 值 | 直连服务商 | OpenRouter 模型名 | 特点 |
+|------|----------------|-----------|-------------------|------|
+| **GPT-5.4 mini** | `gpt-5.4-mini` | OpenAI | `openai/gpt-5.4-mini` | 极快，最新一代轻量模型 |
+| **DeepSeek V3** | `deepseek-chat` | DeepSeek | `deepseek/deepseek-chat` | 极快，中文优秀，价格极低 |
+| **Gemini 3 Flash** | — | — | `google/gemini-3-flash` | 极快，多模态，免费额度充足 |
+| **Qwen Turbo** | `qwen-turbo` | 通义千问 | `qwen/qwen-turbo` | 快速，中文原生，免费额度大 |
+| **GPT-5.3 Instant** | `gpt-5.3-instant` | OpenAI | `openai/gpt-5.3-instant` | 日常对话优化，语气自然 |
 
-#### 🎭 角色扮演型 — 人设稳定、语气还原最佳，但响应稍慢
+#### 🎭 角色扮演型 — 人设稳定、语气还原出色，推荐用于本项目
 
-| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
-|------|----------------|--------|------|
-| **Claude 4 Sonnet** | `claude-sonnet-4-20250514` | Anthropic | 角色扮演天花板，人设极稳，日语出色 |
-| **GPT-4o** | `gpt-4o` | OpenAI | 全能型，角色扮演优秀，支持多语言 |
-| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | 深度思考，角色一致性强，中文佳 |
-| **Qwen Max** | `qwen-max` | 通义千问 | 阿里旗舰，中文角色扮演优秀 |
+| 模型 | `LLM_MODEL` 值 | 直连服务商 | OpenRouter 模型名 | 特点 |
+|------|----------------|-----------|-------------------|------|
+| **Claude Sonnet 4.6** | — | — | `anthropic/claude-sonnet-4.6` | **角色扮演天花板**，人设极稳，日语出色，近 Opus 水平 |
+| **Claude Sonnet 4.5** | — | — | `anthropic/claude-sonnet-4.5` | 角色扮演经典，创意写作强 |
+| **GPT-5.4** | `gpt-5.4` | OpenAI | `openai/gpt-5.4` | 最新旗舰，全能型，1M 上下文 |
+| **DeepSeek V3** | `deepseek-chat` | DeepSeek | `deepseek/deepseek-chat` | 中文角色扮演优秀，性价比极高 |
+| **Qwen Max** | `qwen-max` | 通义千问 | `qwen/qwen-max` | 阿里旗舰，中文人设稳定 |
 
-#### 🧠 推理型 — 复杂对话/长上下文/深度思考
+#### 🧠 推理型 — 深度思考、复杂对话、长上下文，但响应慢
 
-| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
-|------|----------------|--------|------|
-| **o3** | `o3` | OpenAI | 最强推理，但慢且贵 |
-| **Claude 4 Opus** | `claude-opus-4-20250514` | Anthropic | 顶级推理+创作，响应较慢 |
-| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | 开源最强推理，价格低 |
-| **Qwen3 235B (A22B)** | `Qwen/Qwen3-235B-A22B` | 硅基流动 | 开源旗舰，MoE 架构 |
+| 模型 | `LLM_MODEL` 值 | 直连服务商 | OpenRouter 模型名 | 特点 |
+|------|----------------|-----------|-------------------|------|
+| **Claude Opus 4.6** | — | — | `anthropic/claude-opus-4.6` | 最强推理+创作，1M 上下文 |
+| **GPT-5.4 Pro** | `gpt-5.4-pro` | OpenAI | `openai/gpt-5.4-pro` | OpenAI 最强，复杂任务首选 |
+| **Gemini 3.1 Pro** | — | — | `google/gemini-3.1-pro` | Google 旗舰推理，长上下文 |
+| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | `deepseek/deepseek-r1` | 开源最强推理，价格低 |
 
-> **推荐组合**：日常使用 `deepseek-chat`（快+便宜），角色扮演追求极致用 `claude-sonnet-4-20250514`。
+> **推荐组合**：
+> - **追求速度**：`deepseek-chat`（极快+极便宜）或 `gpt-5.4-mini`
+> - **角色扮演最佳**：通过 OpenRouter 使用 `anthropic/claude-sonnet-4.6`（人设最稳）
+> - **一步到位**：用 OpenRouter，按需随时切换任意模型
+>
+> **Claude / Gemini 怎么用？** 这两家的 API 不兼容 OpenAI 格式的直连。最简单的方式是注册 [OpenRouter](https://openrouter.ai)，将 `LLM_BASE_URL` 设为 `https://openrouter.ai/api/v1`，即可通过一个 Key 调用所有模型。
 
 ### 🔴 配置项 2：GPT-SoVITS 安装路径 — `webui.py` 第 29 行
 
