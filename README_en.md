@@ -246,37 +246,32 @@ python webui.py
 
 ##### ⚡ Fast Response — Best for daily conversation, low latency, low cost
 
+> For a voice chatbot, **low latency matters more than raw intelligence** — users don't want to wait 5 seconds for a figure to respond. We recommend choosing from this category for daily use.
+
 | Model | What to enter on Line 22 (`LLM_MODEL`) | Required Provider | Highlights |
 |:-----|:------|:------|:------|
+| ⭐ **DeepSeek V3** | `deepseek-chat` | DeepSeek | **Top pick for this project!** Ultra-fast, great Chinese, decent role-play, nearly free |
 | **GPT-5.4 mini** | `gpt-5.4-mini` | OpenAI | Ultra-fast, latest-gen lightweight flagship |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | Ultra-fast, excellent Chinese, extremely low cost |
 | **Gemini 3 Flash** | `google/gemini-3-flash` | ⚠️ OpenRouter only | Ultra-fast, multimodal, generous free tier |
 | **Qwen Turbo** | `qwen-turbo` | Qwen (通义千问) | Fast, native Chinese, large free tier |
 | **GPT-5.3 Instant** | `gpt-5.3-instant` | OpenAI | Optimized for daily conversation, natural tone |
 
-##### 🎭 Role-Play Specialist — Stable persona, excellent voice reproduction, best suited for this project
+##### 🎭 Role-Play Specialist — Rock-solid persona, excellent voice reproduction, but slower and pricier
+
+> If you demand the **ultimate character fidelity** (unbreakable persona, natural Japanese tone, strong creative writing), choose from these — but expect higher response latency.
 
 | Model | What to enter on Line 22 (`LLM_MODEL`) | Required Provider | Highlights |
 |:-----|:------|:------|:------|
 | **Claude Sonnet 4.6** | `anthropic/claude-sonnet-4.6` | ⚠️ OpenRouter only | **The gold standard for role-play**, rock-solid persona, excellent Japanese |
 | **Claude Sonnet 4.5** | `anthropic/claude-sonnet-4.5` | ⚠️ OpenRouter only | Classic for role-play, strong creative writing |
 | **GPT-5.4** | `gpt-5.4` | OpenAI | Latest flagship, all-rounder, 1M context |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | Excellent Chinese role-play, outstanding cost-performance |
-| **Qwen Max** | `qwen-max` | Qwen (通义千问) | Alibaba's flagship, stable Chinese persona |
-
-##### 🧠 Reasoning — Deep thinking, complex dialogues, but slower response and higher cost
-
-| Model | What to enter on Line 22 (`LLM_MODEL`) | Required Provider | Highlights |
-|:-----|:------|:------|:------|
-| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ OpenRouter only | Strongest reasoning + creative writing, 1M context |
+| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ OpenRouter only | Strongest reasoning + creative writing, top-tier option |
 | **GPT-5.4 Pro** | `gpt-5.4-pro` | OpenAI | OpenAI's most powerful, best for complex tasks |
-| **Gemini 3.1 Pro** | `google/gemini-3.1-pro` | ⚠️ OpenRouter only | Google's flagship reasoning, long context |
-| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | Strongest open-source reasoning, low price |
 
 > [!TIP]
 > **Recommended Combinations**
-> - **Best for Beginners**: DeepSeek (Line 21: `https://api.deepseek.com/v1`, Line 22: `deepseek-chat`) — Ultra-fast, dirt cheap, great Chinese support
-> - **Best for Role-Play**: OpenRouter + Claude Sonnet 4.6 (Line 21: `https://openrouter.ai/api/v1`, Line 22: `anthropic/claude-sonnet-4.6`)
+> - ⭐ **Top Pick for This Project**: DeepSeek V3 (Line 21: `https://api.deepseek.com/v1`, Line 22: `deepseek-chat`) — Fast, cheap, decent role-play, best for real-time voice interaction
+> - **Ultimate Role-Play**: OpenRouter + Claude Sonnet 4.6 (Line 21: `https://openrouter.ai/api/v1`, Line 22: `anthropic/claude-sonnet-4.6`) — Most stable persona, but slower
 > - **Want to use Claude / Gemini?** These two providers don't offer an OpenAI-compatible API, so direct connection is not possible. Register with [OpenRouter](https://openrouter.ai) (free), change Line 21 to `https://openrouter.ai/api/v1`, and you can access all models with one Key.
 
 ---

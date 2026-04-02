@@ -246,37 +246,32 @@ python webui.py
 
 ##### ⚡ 高速レスポンス型 — 日常対話におすすめ、低レイテンシ・低コスト
 
+> ボイスチャットボットでは**低レイテンシが高い知能よりも重要**です（フィギュアに話しかけて 5 秒も待ちたくないですよね）。普段使いにはこちらから選ぶのがおすすめです。
+
 | モデル | 第 22 行に入力する値（`LLM_MODEL`） | 必要なプロバイダ | 特徴 |
 |:-----|:------|:------|:------|
+| ⭐ **DeepSeek V3** | `deepseek-chat` | DeepSeek | **本プロジェクトのイチオシ！** 超高速、中国語が優秀、ロールプレイも十分、ほぼ無料 |
 | **GPT-5.4 mini** | `gpt-5.4-mini` | OpenAI | 超高速、最新世代の軽量フラッグシップ |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 超高速、中国語が優秀、極めて低価格 |
 | **Gemini 3 Flash** | `google/gemini-3-flash` | ⚠️ OpenRouter のみ | 超高速、マルチモーダル、無料枠が充実 |
 | **Qwen Turbo** | `qwen-turbo` | 通義千問（Tongyi Qianwen） | 高速、中国語ネイティブ、無料枠が大きい |
 | **GPT-5.3 Instant** | `gpt-5.3-instant` | OpenAI | 日常対話向けに最適化、自然な語り口 |
 
-##### 🎭 ロールプレイ型 — キャラクター設定が安定し、語気の再現に優れる。本プロジェクトに最適
+##### 🎭 ロールプレイ型 — キャラ設定が安定し、語気の再現に優れるが、レスポンスが遅くコストが高い
+
+> **究極のキャラクター再現度**（キャラ崩壊なし・自然な日本語の語気・創作力）を求めるなら、こちらから選んでください。ただしレスポンスのレイテンシは高くなります。
 
 | モデル | 第 22 行に入力する値（`LLM_MODEL`） | 必要なプロバイダ | 特徴 |
 |:-----|:------|:------|:------|
 | **Claude Sonnet 4.6** | `anthropic/claude-sonnet-4.6` | ⚠️ OpenRouter のみ | **ロールプレイの最高峰**、キャラ設定が極めて安定、日本語が優秀 |
 | **Claude Sonnet 4.5** | `anthropic/claude-sonnet-4.5` | ⚠️ OpenRouter のみ | ロールプレイの定番、創作力に強い |
 | **GPT-5.4** | `gpt-5.4` | OpenAI | 最新フラッグシップ、万能型、1M コンテキスト |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 中国語ロールプレイが優秀、コスパ抜群 |
-| **Qwen Max** | `qwen-max` | 通義千問（Tongyi Qianwen） | Alibaba フラッグシップ、中国語キャラ設定が安定 |
-
-##### 🧠 推論型 — 深い思考・複雑な対話向け、ただしレスポンスが遅くコストが高い
-
-| モデル | 第 22 行に入力する値（`LLM_MODEL`） | 必要なプロバイダ | 特徴 |
-|:-----|:------|:------|:------|
-| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ OpenRouter のみ | 最強の推論＋創作、1M コンテキスト |
+| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ OpenRouter のみ | 最強の推論＋創作、究極の選択肢 |
 | **GPT-5.4 Pro** | `gpt-5.4-pro` | OpenAI | OpenAI 最強、複雑なタスクに最適 |
-| **Gemini 3.1 Pro** | `google/gemini-3.1-pro` | ⚠️ OpenRouter のみ | Google フラッグシップ推論、ロングコンテキスト |
-| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | オープンソース最強の推論、低価格 |
 
 > [!TIP]
 > **おすすめの組み合わせ**
-> - **入門におすすめ**：DeepSeek（第 21 行に `https://api.deepseek.com/v1`、第 22 行に `deepseek-chat`）— 超高速・超低価格・中国語が優秀
-> - **ロールプレイに最適**：OpenRouter + Claude Sonnet 4.6（第 21 行に `https://openrouter.ai/api/v1`、第 22 行に `anthropic/claude-sonnet-4.6`）
+> - ⭐ **本プロジェクトのイチオシ**：DeepSeek V3（第 21 行に `https://api.deepseek.com/v1`、第 22 行に `deepseek-chat`）— 高速・低価格・ロールプレイも十分、リアルタイム音声対話に最適
+> - **ロールプレイ究極**：OpenRouter + Claude Sonnet 4.6（第 21 行に `https://openrouter.ai/api/v1`、第 22 行に `anthropic/claude-sonnet-4.6`）— キャラ設定が最も安定、ただしレスポンスが遅い
 > - **Claude / Gemini を使いたい場合は？** この 2 社は OpenAI 互換 API を提供していないため、直接接続できません。[OpenRouter](https://openrouter.ai)（無料）に登録し、第 21 行を `https://openrouter.ai/api/v1` に変更すれば、1 つの Key ですべてのモデルを呼び出せます。
 
 ---

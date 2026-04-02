@@ -246,37 +246,32 @@ python webui.py
 
 ##### ⚡ 快速响应型 — 日常对话首选，延迟低、成本低
 
+> 语音聊天机器人**低延迟比高智能更重要**（用户不想对着手办等 5 秒才出声），所以日常使用推荐从这里选。
+
 | 模型 | 第 22 行填什么（`LLM_MODEL`） | 需要哪个服务商 | 特点 |
 |:-----|:------|:------|:------|
+| ⭐ **DeepSeek V3** | `deepseek-chat` | DeepSeek | **本项目首选！** 极快，中文优秀，角色扮演也不差，价格几乎免费 |
 | **GPT-5.4 mini** | `gpt-5.4-mini` | OpenAI | 极快，最新一代轻量旗舰 |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 极快，中文优秀，价格极低 |
 | **Gemini 3 Flash** | `google/gemini-3-flash` | ⚠️ 仅 OpenRouter | 极快，多模态，免费额度充足 |
 | **Qwen Turbo** | `qwen-turbo` | 通义千问 | 快速，中文原生，免费额度大 |
 | **GPT-5.3 Instant** | `gpt-5.3-instant` | OpenAI | 日常对话优化，语气自然 |
 
-##### 🎭 角色扮演型 — 人设稳定、语气还原出色，最适合本项目
+##### 🎭 角色扮演型 — 人设稳定、语气还原出色，但响应慢且贵
+
+> 如果你追求**极致的角色还原度**（人设不崩、日语语气自然、创意写作强），可以选这些，但响应延迟会更高。
 
 | 模型 | 第 22 行填什么（`LLM_MODEL`） | 需要哪个服务商 | 特点 |
 |:-----|:------|:------|:------|
 | **Claude Sonnet 4.6** | `anthropic/claude-sonnet-4.6` | ⚠️ 仅 OpenRouter | **角色扮演天花板**，人设极稳，日语出色 |
 | **Claude Sonnet 4.5** | `anthropic/claude-sonnet-4.5` | ⚠️ 仅 OpenRouter | 角色扮演经典，创意写作强 |
 | **GPT-5.4** | `gpt-5.4` | OpenAI | 最新旗舰，全能型，1M 上下文 |
-| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 中文角色扮演优秀，性价比极高 |
-| **Qwen Max** | `qwen-max` | 通义千问 | 阿里旗舰，中文人设稳定 |
-
-##### 🧠 推理型 — 深度思考、复杂对话，但响应慢且贵
-
-| 模型 | 第 22 行填什么（`LLM_MODEL`） | 需要哪个服务商 | 特点 |
-|:-----|:------|:------|:------|
-| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ 仅 OpenRouter | 最强推理+创作，1M 上下文 |
+| **Claude Opus 4.6** | `anthropic/claude-opus-4.6` | ⚠️ 仅 OpenRouter | 最强推理+创作，顶配之选 |
 | **GPT-5.4 Pro** | `gpt-5.4-pro` | OpenAI | OpenAI 最强，复杂任务首选 |
-| **Gemini 3.1 Pro** | `google/gemini-3.1-pro` | ⚠️ 仅 OpenRouter | Google 旗舰推理，长上下文 |
-| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | 开源最强推理，价格低 |
 
 > [!TIP]
 > **推荐组合**
-> - **入门首选**：DeepSeek（第 21 行填 `https://api.deepseek.com/v1`，第 22 行填 `deepseek-chat`）— 极快、极便宜、中文好
-> - **角色扮演最佳**：OpenRouter + Claude Sonnet 4.6（第 21 行填 `https://openrouter.ai/api/v1`，第 22 行填 `anthropic/claude-sonnet-4.6`）
+> - ⭐ **本项目首选**：DeepSeek V3（第 21 行填 `https://api.deepseek.com/v1`，第 22 行填 `deepseek-chat`）— 速度快、价格低、中文角色扮演也够用，最适合语音实时交互
+> - **角色扮演极致**：OpenRouter + Claude Sonnet 4.6（第 21 行填 `https://openrouter.ai/api/v1`，第 22 行填 `anthropic/claude-sonnet-4.6`）— 人设最稳，但响应慢
 > - **想用 Claude / Gemini？** 这两家不提供 OpenAI 兼容 API，无法直连。注册 [OpenRouter](https://openrouter.ai)（免费），将第 21 行改为 `https://openrouter.ai/api/v1`，即可一个 Key 调用全部模型。
 
 ---
