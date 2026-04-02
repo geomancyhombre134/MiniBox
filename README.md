@@ -18,7 +18,8 @@
 - **自动翻译** — 非中文回复自动附加中文翻译
 - **模型热加载** — Web UI 内直接切换/加载不同角色模型和参考音频
 - **交互式抚摸器** — 对话区角色图像支持点击互动，切换表情+爱心粒子
-- **ESP32 手办客户端** — 通过 WiFi 连接局域网 PC，按住按钮即可与手办对话
+- **ESP32 手办客户端** — 通过 WiFi 连接局域网 PC，按键唤醒后自动语音检测（VAD），持续对话无需按住按钮
+- **OLED 像素风动画** — 128x32 SSD1306 屏幕显示可爱角色表情动画（睡眠/眨眼/聆听/说话/思考等 8 种状态）
 - **REST API** — 内置 `/api/voice_chat` 端点，支持第三方硬件/客户端接入
 
 ---
@@ -37,7 +38,7 @@ flowchart TB
     User["👤 用户<br/>浏览器访问"] <-->|"HTTP :7860"| UI
     UI <--> LLM
     UI <--> TTS
-    LLM <-->|"HTTPS"| Cloud["☁️ 云端 LLM<br/>Vtrix / OpenAI / DeepSeek"]
+    LLM <-->|"HTTPS"| Cloud["☁️ 云端 LLM<br/>OpenAI / DeepSeek / 通义千问"]
 
     subgraph ESP["📦 ESP32-S3 手办客户端 (可选)"]
         MIC["🎤 INMP441 麦克风"]
@@ -124,9 +125,11 @@ GSV_DIR = r"E:\GPT-SoVITS-v2pro-20250604"  # 改为你的实际路径
 
 ### 6. 获取 LLM API Key
 
-1. 注册 [Vtrix Cloud](https://cloud.vtrix.ai) 账号
-2. 创建 API Key（`sk-...` 格式）
-3. 启动后在网页界面填入
+本项目支持任何 **OpenAI 兼容协议** 的 LLM API（OpenAI / DeepSeek / 硅基流动 / Ollama 等）。
+
+1. 选择一个 LLM 服务商，注册账号并创建 API Key（`sk-...` 格式）
+2. 启动后在网页界面填入
+3. 如需切换服务商，设置环境变量 `LLM_BASE_URL` 和 `LLM_MODEL`（见下方配置说明）
 
 ### 7. 启动
 
@@ -156,8 +159,9 @@ python webui.py
 | 📁 `bin/` | FFmpeg 二进制（需自行下载放入） |
 | **📁 `esp32/minibox_firmware/`** | **ESP32 手办硬件固件** |
 | 　　📄 `platformio.ini` | PlatformIO 工程配置 |
-| 　　📄 `src/config.h` | WiFi / 服务器 / 引脚配置 |
-| 　　📄 `src/main.cpp` | 固件主程序 |
+| 　　📄 `src/config.h` | WiFi / 服务器 / 引脚 / VAD / 增益配置 |
+| 　　📄 `src/main.cpp` | 固件主程序（状态机 + VAD + OLED 动画） |
+| 　　📄 `src/pixel_art.h` | OLED 像素风角色绘制函数 |
 
 ---
 
@@ -167,25 +171,32 @@ python webui.py
 
 ### LLM API 地址与模型
 
-```python
-# webui.py 第 21 行 — API 地址
-VTRIX_BASE_URL = "https://cloud.vtrix.ai/llm"    # 默认使用 Vtrix Cloud
+通过**环境变量**或直接修改 `webui.py` 切换 LLM 服务商，无需改动代码逻辑：
 
-# webui.py _vtrix_chat() 函数内 — 模型名称
-"model": "vtrix-claude-sonnet-4.5",               # 默认模型
+```bash
+# 环境变量方式（推荐，无需修改代码）
+set LLM_BASE_URL=https://api.openai.com/v1
+set LLM_MODEL=gpt-4o-mini
+python webui.py
 ```
 
-替换示例：
+```python
+# 或直接修改 webui.py 第 21-22 行
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+LLM_MODEL    = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+```
 
-| 服务商 | API 地址 | 模型名称 | API Key 获取 |
+**支持的服务商（任何 OpenAI 兼容协议均可）：**
+
+| 服务商 | `LLM_BASE_URL` | `LLM_MODEL` | API Key 获取 |
 |--------|---------|----------|-------------|
-| OpenAI | `https://api.openai.com/v1` | `gpt-4o` / `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
-| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
-| 硅基流动 | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` | [siliconflow.cn](https://siliconflow.cn) |
-| Ollama（本地） | `http://127.0.0.1:11434/v1` | `qwen2.5:7b` | 无需 Key |
-| Vtrix Cloud | `https://cloud.vtrix.ai/llm` | `vtrix-claude-sonnet-4.5` | [cloud.vtrix.ai](https://cloud.vtrix.ai) |
+| **OpenAI** | `https://api.openai.com/v1` | `gpt-4o` / `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
+| **硅基流动** | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` | [siliconflow.cn](https://siliconflow.cn) |
+| **通义千问** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-turbo` | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
+| **Ollama（本地）** | `http://127.0.0.1:11434/v1` | `qwen2.5:7b` | 无需 Key |
 
-> **提示**：更换后，网页界面的 API Key 输入框需填入对应服务商的密钥。使用本地 Ollama 时可随意填写。
+> **提示**：网页界面的 API Key 输入框需填入对应服务商的密钥。使用本地 Ollama 时可随意填写。
 
 ### GPT-SoVITS 路径
 
@@ -315,34 +326,59 @@ gsv/
 
 ## ESP32 手办客户端
 
-将语音聊天机器人嵌入手办底座，按住按钮即可与角色实体对话。
+将语音聊天机器人嵌入手办底座，**按下唤醒键即可与角色自由对话，无需按住按钮**。
 
-### 硬件清单
+### v2.1 功能特性
 
-| 组件 | 型号 | 参考价格 | 用途 |
-|------|------|---------|------|
-| 主控 | ESP32-S3-DevKitC-1 (N16R8) | ¥35-50 | WiFi + 蓝牙 + PSRAM |
-| 麦克风 | INMP441 I2S 数字麦克风 | ¥8-12 | 录音输入 |
-| 功放 | MAX98357A I2S 功放模块 | ¥8-12 | 驱动喇叭 |
-| 喇叭 | 3W 4Ω 小喇叭 (28mm) | ¥3-5 | 音频输出 |
-| 按钮 | 微型轻触按钮 | ¥1 | 按住说话 |
+- **VAD 自动语音检测** — 唤醒后自动识别说话/静音，无需按住按钮
+- **持续对话模式** — 一轮对话结束后自动继续聆听，连续多轮对话
+- **10 秒无声自动休眠** — 节省功耗
+- **OLED 像素风动画** — 128x32 SSD1306 屏幕显示可爱兔耳角色，8 种表情（睡眠/待机/眨眼/聆听/录音/思考/说话）
+- **音量调节** — 按键调节 + 屏幕大字显示百分比和进度条
+- **呼吸灯** — 睡眠时蓝色呼吸灯，不同状态不同颜色指示
 
-**总成本约 ¥60-90**
+### 推荐硬件：鹿小班小智 AI 扩展板
 
-### 接线图
+本项目的 ESP32 固件基于 [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) 开源项目的**鹿小班小智 AI 扩展板**（`bread-compact-wifi` 配置）开发。该扩展板已集成全部所需硬件，**无需自行接线焊接**：
+
+| 组件 | 型号 | 说明 |
+|------|------|------|
+| 主控 | ESP32-S3 (N16R8) | WiFi + 蓝牙 + 8MB PSRAM |
+| 麦克风 | INMP441 I2S | 板载，已焊接 |
+| 功放+喇叭 | MAX98357A + 喇叭 | 板载，已焊接 |
+| 屏幕 | SSD1306 OLED 128x32 | 板载 I2C，显示角色动画 |
+| 按键 | 4 个物理按键 | 唤醒、音量+、音量-、复位 |
+| LED | WS2812 RGB | 状态指示呼吸灯 |
+
+> **购买提示**：淘宝/拼多多搜索「鹿小班 小智AI ESP32-S3 扩展板」，约 ¥40-60，到手即用。
+
+### 按键功能
+
+| 位置 | GPIO | 功能 | 操作方式 |
+|------|------|------|---------|
+| 右下 | GPIO 0 | 唤醒/休眠 | 按一次唤醒开始对话；对话中按一次手动休眠 |
+| 左上 | GPIO 40 | 音量+ | 每按一次 +10%，屏幕显示音量 |
+| 左下 | GPIO 39 | 音量- | 每按一次 -10%，屏幕显示音量 |
+| 右上 | 硬件 EN | 复位 | 硬件级重启 |
+
+### 引脚映射（鹿小班扩展板）
 
 | ESP32-S3 引脚 | 连接目标 | 说明 |
 |:---:|:---|:---|
-| **GPIO 4** | INMP441 — SCK | 麦克风时钟 |
-| **GPIO 5** | INMP441 — WS | 麦克风字选择 |
-| **GPIO 6** | INMP441 — SD | 麦克风数据 |
+| **GPIO 5** | INMP441 — SCK | 麦克风时钟 |
+| **GPIO 4** | INMP441 — WS | 麦克风字选择 |
+| **GPIO 6** | INMP441 — SD | 麦克风数据输入 |
 | **GPIO 15** | MAX98357A — BCLK | 功放位时钟 |
 | **GPIO 16** | MAX98357A — LRC | 功放帧同步 |
-| **GPIO 17** | MAX98357A — DIN | 功放数据 |
-| **GPIO 0** | 轻触按钮（另一端接 GND） | 按住说话 |
-| **3V3** | INMP441 VDD, MAX98357A VIN | 供电 |
-| **GND** | INMP441 GND/L/R, MAX98357A GND | 共地 |
-| **USB** | 电脑 / 充电宝 | 5V 供电 & 烧录 |
+| **GPIO 7** | MAX98357A — DIN | 功放数据输出 |
+| **GPIO 41** | SSD1306 — SDA | OLED I2C 数据 |
+| **GPIO 42** | SSD1306 — SCL | OLED I2C 时钟 |
+| **GPIO 48** | WS2812 RGB LED | 状态指示灯 |
+| **GPIO 0** | 唤醒按钮 | 按下接 GND |
+| **GPIO 40** | 音量+按钮 | 按下接 GND |
+| **GPIO 39** | 音量-按钮 | 按下接 GND |
+
+> **自行 DIY 接线？** 如果使用通用 ESP32-S3-DevKitC-1 + 面包板搭建，按上表接线即可。OLED 和按键为可选组件。
 
 ### 固件烧录（详细教程）
 
@@ -422,7 +458,7 @@ pio device monitor --baud 115200
 
 - 确保 PC 端 `webui.py` 已启动
 - ESP32 和 PC 在同一局域网
-- **按住 BOOT 按钮说话，松开等回复**
+- **按下 BOOT 按钮唤醒，直接开口说话即可**（无需按住，VAD 自动识别）
 
 #### 方式 B：VSCode + PlatformIO 插件烧录
 
@@ -465,20 +501,53 @@ pio device monitor --baud 115200
 - 确认 ESP32 和 PC 在同一网段（IP 前三段相同）
 </details>
 
+#### 烧录注意事项（鹿小班扩展板）
+
+<details>
+<summary><b>GPIO 0 (BOOT 按钮) 在 I2S 初始化后不稳定</b></summary>
+
+ESP32-S3 的 I2S 驱动初始化时可能会复用 GPIO 0，导致其无法正常作为按钮输入。固件中已通过 `gpio_reset_pin(GPIO_NUM_0)` 在 I2S 初始化后重新配置该引脚，并使用中断 + 轮询双重检测确保可靠。如果你修改了固件，请注意在 I2S 初始化后调用引脚重配。
+</details>
+
+<details>
+<summary><b>麦克风声音太小 / STT 识别失败</b></summary>
+
+INMP441 麦克风的原始采集电平较低，固件中内置了 8 倍软件增益（`MIC_GAIN = 8`）。如果仍然声音太小，可在 `config.h` 中增大 `MIC_GAIN` 值（最大建议 16），同时降低 `VAD_THRESHOLD`（默认 120）。
+</details>
+
+<details>
+<summary><b>OLED 屏幕不亮</b></summary>
+
+检查 I2C 地址是否为 `0x3C`（大部分 SSD1306 模块使用此地址）。可在 `config.h` 中修改 `OLED_ADDR`。如果使用 128x64 屏幕，需修改 `SCREEN_H` 为 64。
+</details>
+
 ### LED 指示灯
 
 | 颜色 | 状态 |
 |:---|:---|
-| 绿色闪一下 | 启动成功 |
+| 蓝色呼吸灯 | 睡眠中 |
+| 绿色闪一下 | 唤醒成功 |
 | 红色常亮 | 正在录音 |
 | 蓝色常亮 | 上传中 / 等待服务器回复 |
 | 绿色常亮 | 正在播放语音回复 |
-| 灯灭 | 空闲待命 |
+| 灯灭 | 待机聆听中（VAD 等待语音） |
+
+### OLED 屏幕显示
+
+| 状态 | 屏幕内容 |
+|:---|:---|
+| 睡眠 | 兔耳角色闭眼 + "zzZ" 动画 |
+| 待机 | 兔耳角色正常表情，偶尔眨眼 |
+| 聆听 | 兔耳竖起 + "..." 气泡 |
+| 录音 | 兔耳竖起 + 音量条 + "REC" 闪烁 |
+| 思考 | 兔耳歪头 + 旋转加载动画 |
+| 说话 | 嘴巴开合动画 + 音符飘动 |
+| 音量调节 | 大字体百分比 + 进度条（1.5 秒后自动消失） |
 
 ### PC 端 API
 
 ```
-POST http://<PC-IP>:7860/api/voice_chat
+POST http://<PC-IP>:7860/esp32/voice_chat
 Content-Type: audio/wav
 Body: WAV 音频 (16kHz, 16bit, mono)
 
@@ -494,11 +563,11 @@ Response 500: LLM 或 TTS 失败
 | 层级 | 技术 |
 |------|------|
 | 前端 UI | Gradio 3.50.2 |
-| 大语言模型 | Vtrix Cloud API (OpenAI-compatible) |
+| 大语言模型 | OpenAI 兼容协议（支持 OpenAI / DeepSeek / 通义千问 / Ollama 等） |
 | 语音合成 (TTS) | GPT-SoVITS v2 / MiniMax / Edge-TTS |
 | 语音识别 (STT) | SpeechRecognition + Google Web Speech API |
 | 音频处理 | FFmpeg / numpy |
-| 硬件客户端 | ESP32-S3 + INMP441 + MAX98357A |
+| 硬件客户端 | ESP32-S3 + INMP441 + MAX98357A + SSD1306 OLED |
 | 硬件框架 | Arduino (PlatformIO) |
 
 ---
@@ -522,14 +591,17 @@ Response 500: LLM 或 TTS 失败
 
 | 项目 | 作者 | 许可证 | 用途 |
 |------|------|--------|------|
+| [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) | 78 (虾哥) | MIT | ESP32 AI 聊天机器人开源项目，硬件设计参考与灵感来源 |
 | [Arduino-ESP32](https://github.com/espressif/arduino-esp32) | Espressif | Apache 2.0 | ESP32 Arduino 框架 |
 | [ArduinoJson](https://github.com/bblanchon/ArduinoJson) | Benoît Blanchon | MIT | JSON 序列化/反序列化 |
+| [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306) | Adafruit | BSD | OLED 显示驱动 |
+| [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library) | Adafruit | BSD | 图形绘制库 |
 | [PlatformIO](https://platformio.org/) | PlatformIO Labs | Apache 2.0 | 嵌入式开发平台 |
 
 ### 特别感谢
 
+- **[虾哥 (78)](https://github.com/78)** — [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) 开源项目作者。MiniBox 的 ESP32 硬件客户端基于小智 AI 的「鹿小班扩展板」硬件设计开发，引脚映射和硬件架构参考了该项目。感谢虾哥为开源社区提供了优秀的 ESP32 AI 聊天机器人方案！
 - **[花儿不哭老师](https://space.bilibili.com/1592878818)** — GPT-SoVITS 项目作者，提供了优秀的语音合成框架和一键安装包
-- **[Vtrix Cloud](https://cloud.vtrix.ai)** — 提供 OpenAI 兼容的 LLM API 服务
 - **《超时空辉夜姬！》（超かぐや姫！）** — 角色「酒寄彩叶」的原作动画电影，角色设定和人设参考来源
 
 ### 角色声明

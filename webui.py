@@ -18,7 +18,8 @@ BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin")
 if os.path.isdir(BIN_DIR):
     os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ.get("PATH", "")
 
-VTRIX_BASE_URL = "https://cloud.vtrix.ai/llm"
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+LLM_MODEL    = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 import aiohttp
 
 # ==========================================
@@ -429,7 +430,7 @@ async def gpt_sovits_tts_generate(text, char_config, output_path):
         )
 
 async def minimax_tts_generate(text, voice_id, output_path, api_key):
-    print(f"  [Vtrix-TTS] 正在调用 minimax_speech_26_hd, 音色: {voice_id}...")
+    print(f"  [Cloud-TTS] 正在调用 minimax_speech_26_hd, 音色: {voice_id}...")
     try:
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -464,7 +465,7 @@ async def minimax_tts_generate(text, voice_id, output_path, api_key):
         }
 
         def fetch_audio():
-            url = "https://cloud.vtrix.ai/model/v1/generation"
+            url = os.environ.get("TTS_API_URL", "https://api.minimaxi.chat/v1/t2a_v2")
             response = sync_requests.post(url, headers=headers, json=payload, timeout=30, verify=False)
             if response.status_code != 200:
                 raise Exception(f"提交任务失败 HTTP {response.status_code}: {response.text}")
@@ -477,10 +478,11 @@ async def minimax_tts_generate(text, voice_id, output_path, api_key):
             session = sync_requests.Session()
             for i in range(20):
                 time.sleep(2)
+                tts_base = os.environ.get("TTS_API_URL", "https://api.minimaxi.chat/v1/t2a_v2")
                 for poll_url in [
-                    f"https://cloud.vtrix.ai/model/v1/generation/{task_id}",
-                    f"https://cloud.vtrix.ai/model/v1/generation/task/{task_id}",
-                    f"https://cloud.vtrix.ai/model/v1/generation?id={task_id}"
+                    f"{tts_base}/{task_id}",
+                    f"{tts_base}/task/{task_id}",
+                    f"{tts_base}?id={task_id}"
                 ]:
                     try:
                         poll_res = session.get(poll_url, headers=headers, timeout=20, verify=False)
@@ -510,21 +512,21 @@ async def minimax_tts_generate(text, voice_id, output_path, api_key):
 
         await asyncio.to_thread(fetch_audio)
     except Exception as e:
-        print(f"  [Vtrix-TTS 异常] {e}")
+        print(f"  [Cloud-TTS 异常] {e}")
         raise e
 
 # ==========================================
 # LLM 大模型调用
 # ==========================================
-async def _vtrix_chat(api_key, messages, temperature=0.5, max_tokens=300, timeout_sec=30):
-    """直接用 aiohttp 调用 Vtrix OpenAI 兼容 API，绕过 openai/httpx 编码问题"""
-    url = f"{VTRIX_BASE_URL}/chat/completions"
+async def _llm_chat(api_key, messages, temperature=0.5, max_tokens=300, timeout_sec=30):
+    """通过 aiohttp 调用 OpenAI 兼容 API (支持 OpenAI / DeepSeek / 通义千问等)"""
+    url = f"{LLM_BASE_URL}/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "vtrix-claude-sonnet-4.5",
+        "model": LLM_MODEL,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
@@ -555,7 +557,7 @@ async def call_llm(text, system_prompt, api_key, history=None):
                     clean = clean.split("\n[语音生成失败:")[0]
                     messages.append({"role": "assistant", "content": clean})
         messages.append({"role": "user", "content": text})
-        return await _vtrix_chat(api_key, messages, temperature=0.5, max_tokens=300, timeout_sec=30)
+        return await _llm_chat(api_key, messages, temperature=0.5, max_tokens=300, timeout_sec=30)
     except Exception as e:
         print(f"大模型调用错误: {e}")
         return f"抱歉，大模型调用失败: {e}"
@@ -567,7 +569,7 @@ async def translate_to_chinese(text, api_key):
             {"role": "system", "content": "你是一个翻译助手。请将以下内容翻译成自然流畅的中文，只输出翻译结果，不要添加任何解释。"},
             {"role": "user", "content": text}
         ]
-        result = await _vtrix_chat(api_key, messages, temperature=0.3, max_tokens=200, timeout_sec=20)
+        result = await _llm_chat(api_key, messages, temperature=0.3, max_tokens=200, timeout_sec=20)
         return result.strip() if result else None
     except Exception as e:
         print(f"[翻译] 失败: {e}")
@@ -610,7 +612,7 @@ def _load_api_key():
 async def process_chat(user_text, character_choice, api_key, history):
     global _shared_api_key
     if not api_key:
-        history.append((user_text, "请先在左侧输入你的 Vtrix API Key"))
+        history.append((user_text, "请先在左侧输入你的 API Key"))
         return history, history, None
     _save_api_key(api_key)
 
@@ -1072,7 +1074,7 @@ def build_ui():
                 with gr.Row():
                     with gr.Column(scale=1):
                         api_key_input = gr.Textbox(
-                            label="Vtrix API Key",
+                            label="LLM API Key",
                             placeholder="sk-...",
                             type="password",
                             info="请填入你的 API Key"
@@ -1303,7 +1305,7 @@ async def esp32_voice_chat(request: Request):
 
     default_char = "酒寄彩叶 (本地GPT-SoVITS)"
     char_config = VOICE_LIBRARY.get(default_char, list(VOICE_LIBRARY.values())[0])
-    api_key = _load_api_key() or os.environ.get("VTRIX_API_KEY", "")
+    api_key = _load_api_key() or os.environ.get("LLM_API_KEY", "")
     if not api_key:
         return Response(content=b"API key not set. Please enter your API key in the web UI first.", status_code=401)
     print(f"[ESP32-API] API key configured: {'yes' if api_key else 'no'}")
