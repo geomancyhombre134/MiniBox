@@ -123,13 +123,32 @@ GSV_DIR = r"E:\GPT-SoVITS-v2pro-20250604"  # 改为你的实际路径
 >
 > **夸克网盘：<https://pan.quark.cn/s/abe9a12e4675>**
 
-### 6. 获取 LLM API Key
+### 6. 获取 API Key
 
-本项目支持任何 **OpenAI 兼容协议** 的 LLM API（OpenAI / DeepSeek / 硅基流动 / Ollama 等）。
+本项目需要 **两种 API Key**（LLM 必需，MiniMax TTS 可选）：
 
-1. 选择一个 LLM 服务商，注册账号并创建 API Key（`sk-...` 格式）
-2. 启动后在网页界面填入
-3. 如需切换服务商，设置环境变量 `LLM_BASE_URL` 和 `LLM_MODEL`（见下方配置说明）
+#### 6a. LLM API Key（必需）— 用于角色对话
+
+任何 **OpenAI 兼容协议** 的 LLM API 均可使用：
+
+| 服务商 | 注册地址 | 说明 |
+|--------|---------|------|
+| **OpenAI** | [platform.openai.com](https://platform.openai.com) | 国际主流，需海外手机号 |
+| **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com) | 国产首选，支持支付宝，性价比极高 |
+| **硅基流动** | [siliconflow.cn](https://siliconflow.cn) | 国内平台，可调用多种开源模型 |
+| **通义千问** | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) | 阿里云，支持支付宝 |
+
+注册后创建 API Key（`sk-...` 格式），启动后在网页界面左侧输入框填入即可。
+
+#### 6b. MiniMax API Key（可选）— 用于云端 TTS 语音
+
+如果你想使用 **MiniMax 云端语音合成**（温柔女声/成熟男声），需要额外注册 MiniMax：
+
+1. 前往 [MiniMax 开放平台](https://www.minimaxi.com/) 注册账号
+2. 在控制台创建应用，获取 API Key
+3. MiniMax TTS 和 LLM 共用同一个 API Key 输入框
+
+> **不注册 MiniMax 也能用！** 默认使用 GPT-SoVITS（本地）或 Edge-TTS（免费云端），完全不需要 MiniMax。MiniMax 只是额外的高品质云端语音选项。
 
 ### 7. 启动
 
@@ -165,46 +184,107 @@ python webui.py
 
 ---
 
-## 自定义配置（更换 LLM / API 服务商）
+## ⚙️ 需要修改的配置项（重要！）
 
-本项目的 LLM 调用基于 **OpenAI 兼容协议**，支持任何兼容该协议的服务商。修改 `webui.py` 中以下两处即可切换：
+> **以下是你必须根据自己环境修改的所有位置，均在 `webui.py` 中。**
 
-### LLM API 地址与模型
-
-通过**环境变量**或直接修改 `webui.py` 切换 LLM 服务商，无需改动代码逻辑：
-
-```bash
-# 环境变量方式（推荐，无需修改代码）
-set LLM_BASE_URL=https://api.openai.com/v1
-set LLM_MODEL=gpt-4o-mini
-python webui.py
-```
+### 🔴 配置项 1：LLM API 地址与模型 — `webui.py` 第 21-22 行
 
 ```python
-# 或直接修改 webui.py 第 21-22 行
+# ===== webui.py 第 21 行 =====
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+# ===== webui.py 第 22 行 =====
 LLM_MODEL    = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 ```
 
-**支持的服务商（任何 OpenAI 兼容协议均可）：**
+修改引号内的默认值即可切换 LLM 服务商，或通过环境变量覆盖（无需改代码）：
 
-| 服务商 | `LLM_BASE_URL` | `LLM_MODEL` | API Key 获取 |
-|--------|---------|----------|-------------|
-| **OpenAI** | `https://api.openai.com/v1` | `gpt-4o` / `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
-| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
-| **硅基流动** | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` | [siliconflow.cn](https://siliconflow.cn) |
-| **通义千问** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-turbo` | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| **Ollama（本地）** | `http://127.0.0.1:11434/v1` | `qwen2.5:7b` | 无需 Key |
+```bash
+# Windows 环境变量方式（推荐）
+set LLM_BASE_URL=https://api.deepseek.com/v1
+set LLM_MODEL=deepseek-chat
+python webui.py
+```
 
-> **提示**：网页界面的 API Key 输入框需填入对应服务商的密钥。使用本地 Ollama 时可随意填写。
+**服务商 + API 地址速查表：**
 
-### GPT-SoVITS 路径
+| 服务商 | `LLM_BASE_URL` | 注册地址 |
+|--------|---------|---------|
+| **OpenAI** | `https://api.openai.com/v1` | [platform.openai.com](https://platform.openai.com) |
+| **DeepSeek** | `https://api.deepseek.com/v1` | [platform.deepseek.com](https://platform.deepseek.com) |
+| **硅基流动** | `https://api.siliconflow.cn/v1` | [siliconflow.cn](https://siliconflow.cn) |
+| **通义千问** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
+| **MiniMax** | `https://api.minimaxi.chat/v1` | [minimaxi.com](https://www.minimaxi.com/) |
+| **Ollama（本地）** | `http://127.0.0.1:11434/v1` | 无需注册 |
+
+### 📋 模型推荐（按使用场景分类）
+
+#### ⚡ 快速响应型 — 日常对话首选，延迟低、成本低
+
+| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
+|------|----------------|--------|------|
+| **GPT-4o mini** | `gpt-4o-mini` | OpenAI | 极快，质量稳定，性价比之王 |
+| **DeepSeek V3** | `deepseek-chat` | DeepSeek | 极快，中文优秀，价格极低（¥1/百万 token） |
+| **Qwen Turbo** | `qwen-turbo` | 通义千问 | 快速，中文原生，阿里云免费额度大 |
+| **GLM-4-Flash** | `glm-4-flash` | 智谱 AI | 快速，免费额度，中文友好 |
+| **Gemini 2.0 Flash** | `gemini-2.0-flash` | Google | 极快，多模态，免费额度充足 |
+
+#### 🎭 角色扮演型 — 人设稳定、语气还原最佳，但响应稍慢
+
+| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
+|------|----------------|--------|------|
+| **Claude 4 Sonnet** | `claude-sonnet-4-20250514` | Anthropic | 角色扮演天花板，人设极稳，日语出色 |
+| **GPT-4o** | `gpt-4o` | OpenAI | 全能型，角色扮演优秀，支持多语言 |
+| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | 深度思考，角色一致性强，中文佳 |
+| **Qwen Max** | `qwen-max` | 通义千问 | 阿里旗舰，中文角色扮演优秀 |
+
+#### 🧠 推理型 — 复杂对话/长上下文/深度思考
+
+| 模型 | `LLM_MODEL` 值 | 服务商 | 特点 |
+|------|----------------|--------|------|
+| **o3** | `o3` | OpenAI | 最强推理，但慢且贵 |
+| **Claude 4 Opus** | `claude-opus-4-20250514` | Anthropic | 顶级推理+创作，响应较慢 |
+| **DeepSeek R1** | `deepseek-reasoner` | DeepSeek | 开源最强推理，价格低 |
+| **Qwen3 235B (A22B)** | `Qwen/Qwen3-235B-A22B` | 硅基流动 | 开源旗舰，MoE 架构 |
+
+> **推荐组合**：日常使用 `deepseek-chat`（快+便宜），角色扮演追求极致用 `claude-sonnet-4-20250514`。
+
+### 🔴 配置项 2：GPT-SoVITS 安装路径 — `webui.py` 第 29 行
 
 ```python
-# webui.py 第 28-29 行
-GSV_DIR = r"C:\GPT-SoVITS-v2pro-20250604"   # 改为你的 GPT-SoVITS 安装路径
-GSV_API_URL = "http://127.0.0.1:9880"       # API 端口，默认不用改
+# ===== webui.py 第 29 行 =====
+GSV_DIR = os.environ.get("GSV_DIR", r"C:\GPT-SoVITS-v2pro-20250604")
 ```
+
+改为你解压 GPT-SoVITS 的实际路径。
+
+```python
+# ===== webui.py 第 28 行（一般不用改）=====
+GSV_API_URL = "http://127.0.0.1:9880"
+```
+
+### 🔴 配置项 3：MiniMax TTS API（可选）— `webui.py` 第 468 行
+
+仅在使用 MiniMax 云端语音时需要修改：
+
+```python
+# ===== webui.py 第 468 行 =====
+url = os.environ.get("TTS_API_URL", "https://api.minimaxi.chat/v1/t2a_v2")
+```
+
+> 如果只使用 GPT-SoVITS（本地）或 Edge-TTS（免费），此项**无需修改**。
+
+### 📍 所有可配置项速查
+
+| 配置项 | 文件位置 | 行号 | 是否必改 |
+|:-------|:--------|:----:|:-------:|
+| **LLM API 地址** | `webui.py` → `LLM_BASE_URL` | **第 21 行** | ✅ 必改 |
+| **LLM 模型名称** | `webui.py` → `LLM_MODEL` | **第 22 行** | ✅ 必改 |
+| **GPT-SoVITS 路径** | `webui.py` → `GSV_DIR` | **第 29 行** | ✅ 必改 |
+| **API Key** | 网页界面左侧输入框 / `.api_key` 文件 | — | ✅ 必填 |
+| GPT-SoVITS API 端口 | `webui.py` → `GSV_API_URL` | 第 28 行 | 一般不改 |
+| MiniMax TTS API | `webui.py` → `TTS_API_URL` | 第 468 行 | 可选 |
+| ESP32 WiFi / 服务器 IP | `esp32/.../config.h` | 第 4-8 行 | 使用 ESP32 时必改 |
 
 ---
 
