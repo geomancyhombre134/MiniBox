@@ -52,3 +52,16 @@ Desktop.ini
 
 # Config with user-specific paths
 config.ini
+
+# API key persistence file (NEVER commit)
+.api_key
+
+# ESP32 debug audio
+esp32_debug.wav
+
+# PlatformIO library deps (auto-downloaded)
+esp32/minibox_firmware/.pio/libdeps/
+
+# Backup firmware files
+*.cpp.bak
+main_real.cpp*

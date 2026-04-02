@@ -25,8 +25,7 @@ import aiohttp
 # GPT-SoVITS 配置与自动启动
 # ==========================================
 GSV_API_URL = "http://127.0.0.1:9880"
-# ↓↓↓ 修改为你本地 GPT-SoVITS 的安装路径 ↓↓↓
-GSV_DIR = r"C:\GPT-SoVITS-v2pro-20250604"
+GSV_DIR = os.environ.get("GSV_DIR", r"C:\GPT-SoVITS-v2pro-20250604")
 GSV_MODELS_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gsv")
 
 GSV_SOVITS_WEIGHTS = ""
@@ -251,8 +250,8 @@ atexit.register(stop_gpt_sovits)
 VOICE_LIBRARY = {
     "酒寄彩叶 (本地GPT-SoVITS)": {
         "tts_engine": "gpt-sovits",
-        "ref_audio": os.path.join(GSV_MODELS_ROOT, "酒寄彩叶gsv模型", "训练集", "vocal_all.wav_10.wav_0024230720_0024351680.wav"),
-        "ref_text": "八千代、かぐやを守ることってできないかな?",
+        "ref_audio": os.path.join(GSV_MODELS_ROOT, "酒寄彩叶gsv模型", "训练集", "vocal_all.wav_10.wav_0005812480_0005947520.wav"),
+        "ref_text": "ハッピーエンドいらない普通のエンドで結構です",
         "ref_language": "ja",
         "text_language": "ja",
         "prompt": (
@@ -277,8 +276,8 @@ VOICE_LIBRARY = {
     },
     "酒寄彩叶-中文 (本地GPT-SoVITS)": {
         "tts_engine": "gpt-sovits",
-        "ref_audio": os.path.join(GSV_MODELS_ROOT, "酒寄彩叶gsv模型", "训练集", "vocal_all.wav_10.wav_0024230720_0024351680.wav"),
-        "ref_text": "八千代、かぐやを守ることってできないかな?",
+        "ref_audio": os.path.join(GSV_MODELS_ROOT, "酒寄彩叶gsv模型", "训练集", "vocal_all.wav_10.wav_0005812480_0005947520.wav"),
+        "ref_text": "ハッピーエンドいらない普通のエンドで結構です",
         "ref_language": "ja",
         "text_language": "zh",
         "prompt": (
@@ -590,10 +589,30 @@ def is_mostly_chinese(text):
 # ==========================================
 # 核心对话处理
 # ==========================================
+_shared_api_key = ""
+_API_KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".api_key")
+
+def _save_api_key(key):
+    global _shared_api_key
+    _shared_api_key = key
+    with open(_API_KEY_FILE, "w") as f:
+        f.write(key)
+
+def _load_api_key():
+    global _shared_api_key
+    if _shared_api_key:
+        return _shared_api_key
+    if os.path.exists(_API_KEY_FILE):
+        with open(_API_KEY_FILE, "r") as f:
+            _shared_api_key = f.read().strip()
+    return _shared_api_key
+
 async def process_chat(user_text, character_choice, api_key, history):
+    global _shared_api_key
     if not api_key:
         history.append((user_text, "请先在左侧输入你的 Vtrix API Key"))
         return history, history, None
+    _save_api_key(api_key)
 
     if not user_text:
         return history, history, None
@@ -1250,6 +1269,11 @@ async def esp32_voice_chat(request: Request):
 
     print(f"\n[ESP32-API] Received {len(body)} bytes audio")
 
+    debug_path = os.path.join(os.path.dirname(__file__), "esp32_debug.wav")
+    with open(debug_path, "wb") as df:
+        df.write(body)
+    print(f"[ESP32-API] Debug audio saved to {debug_path}")
+
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         tmp.write(body)
         tmp_path = tmp.name
@@ -1266,7 +1290,8 @@ async def esp32_voice_chat(request: Request):
                 audio_data = recognizer.record(source)
             text = recognizer.recognize_google(audio_data, language="ja-JP")
             print(f"[ESP32-API] STT result (ja): {text}")
-        except:
+        except Exception as stt_err:
+            print(f"[ESP32-API] STT failed (both zh/ja): {stt_err}")
             os.unlink(tmp_path)
             return Response(content=b"STT failed", status_code=400)
     except Exception as e:
@@ -1278,7 +1303,10 @@ async def esp32_voice_chat(request: Request):
 
     default_char = "酒寄彩叶 (本地GPT-SoVITS)"
     char_config = VOICE_LIBRARY.get(default_char, list(VOICE_LIBRARY.values())[0])
-    api_key = os.environ.get("VTRIX_API_KEY", "")
+    api_key = _load_api_key() or os.environ.get("VTRIX_API_KEY", "")
+    if not api_key:
+        return Response(content=b"API key not set. Please enter your API key in the web UI first.", status_code=401)
+    print(f"[ESP32-API] API key configured: {'yes' if api_key else 'no'}")
 
     llm_reply = await call_llm(text, char_config["prompt"], api_key, _esp32_history)
     if not llm_reply:
@@ -1299,10 +1327,32 @@ async def esp32_voice_chat(request: Request):
         else:
             await edge_tts_generate(tts_text, "zh-CN-XiaoxiaoNeural", out_path)
 
-        with open(out_path, "rb") as f:
-            wav_bytes = f.read()
+        import wave as wave_mod, struct as struct_mod
+        with wave_mod.open(out_path, 'rb') as wf:
+            src_rate = wf.getframerate()
+            n_channels = wf.getnchannels()
+            sampwidth = wf.getsampwidth()
+            raw = wf.readframes(wf.getnframes())
         os.unlink(out_path)
-        print(f"[ESP32-API] Returning {len(wav_bytes)} bytes audio")
+
+        target_rate = 16000
+        if src_rate != target_rate:
+            print(f"[ESP32-API] Resampling {src_rate}Hz -> {target_rate}Hz")
+            samples = struct_mod.unpack(f'<{len(raw)//2}h', raw)
+            ratio = src_rate / target_rate
+            new_len = int(len(samples) / ratio)
+            resampled = [samples[int(i * ratio)] for i in range(new_len)]
+            raw = struct_mod.pack(f'<{new_len}h', *resampled)
+
+        out_buf = io.BytesIO()
+        with wave_mod.open(out_buf, 'wb') as wout:
+            wout.setnchannels(1)
+            wout.setsampwidth(2)
+            wout.setframerate(target_rate)
+            wout.writeframes(raw)
+        wav_bytes = out_buf.getvalue()
+
+        print(f"[ESP32-API] Returning {len(wav_bytes)} bytes audio (16kHz)")
         return Response(content=wav_bytes, media_type="audio/wav")
     except Exception as e:
         if os.path.exists(out_path):
@@ -1322,8 +1372,15 @@ if __name__ == "__main__":
     print(f"\n[启动] 第 2 步: 启动 Web 界面...")
     demo = build_ui()
 
-    app = demo.app
-    app.post("/api/voice_chat")(esp32_voice_chat)
-    print("[启动] ESP32 API 已注册: POST /api/voice_chat")
+    import time as _time
+    from fastapi.routing import APIRoute
 
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, inbrowser=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, inbrowser=False, prevent_thread_lock=True)
+
+    app = demo.app
+    route = APIRoute("/esp32/voice_chat", esp32_voice_chat, methods=["POST"])
+    app.router.routes.insert(0, route)
+    print("[启动] ESP32 API 已注册: POST http://0.0.0.0:7860/esp32/voice_chat")
+
+    while True:
+        _time.sleep(1)
