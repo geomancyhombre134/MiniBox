@@ -1,3 +1,5 @@
+**🌐 Language / 语言切换：** [中文](README.md) | [English](README_en.md) | [日本語](README_ja.md)
+
 # MiniBox — GPT-SoVITS 角色语音聊天机器人
 
 **超かぐや姫！ 超時空輝夜姫！ — 月読空間へようこそ**
