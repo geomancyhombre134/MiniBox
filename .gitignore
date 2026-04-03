@@ -65,3 +65,8 @@ esp32/minibox_firmware/.pio/libdeps/
 # Backup firmware files
 *.cpp.bak
 main_real.cpp*
+
+# ESP32 flash tool runtime files
+flash_config.json
+_temp_nvs.bin
+esp32/firmware/

@@ -188,11 +188,13 @@ python webui.py
 | 🔧 `.gitignore` | Git 忽略规则 |
 | 📁 `gsv/` | 角色语音模型目录（需自行放入模型文件） |
 | 📁 `bin/` | FFmpeg 二进制（需自行下载放入） |
-| **📁 `esp32/minibox_firmware/`** | **ESP32 手办硬件固件** |
-| 　　📄 `platformio.ini` | PlatformIO 工程配置 |
-| 　　📄 `src/config.h` | WiFi / 服务器 / 引脚 / VAD / 增益配置 |
-| 　　📄 `src/main.cpp` | 固件主程序（状态机 + VAD + OLED 动画） |
-| 　　📄 `src/pixel_art.h` | OLED 像素风角色绘制函数 |
+| **📁 `esp32/`** | **ESP32 手办硬件** |
+| 　　📄 `flash_tool.py` | **一键烧录工具**（GUI，自动检测串口 + 配置 WiFi） |
+| 　　📁 `minibox_firmware/` | 固件源码（PlatformIO 工程） |
+| 　　　📄 `platformio.ini` | PlatformIO 工程配置 |
+| 　　　📄 `src/config.h` | WiFi / 服务器 / 引脚 / VAD / 增益配置 |
+| 　　　📄 `src/main.cpp` | 固件主程序（状态机 + VAD + OLED 动画） |
+| 　　　📄 `src/pixel_art.h` | OLED 像素风角色绘制函数 |
 
 ---
 
@@ -336,7 +338,7 @@ url = os.environ.get("TTS_API_URL", "https://api.minimaxi.chat/v1/t2a_v2")
 | **4** | **API Key** | 启动后在网页界面左侧输入框填入 | — | ✅ 必填 |
 | 5 | GPT-SoVITS API 端口 | `webui.py` → `GSV_API_URL` | 第 28 行 | 一般不改 |
 | 6 | MiniMax TTS API | `webui.py` → `TTS_API_URL` | 第 468 行 | 可选 |
-| 7 | ESP32 WiFi 和服务器 IP | `esp32/.../config.h` | 第 4-8 行 | 用 ESP32 时必改 |
+| 7 | ESP32 WiFi 和服务器 IP | `esp32/.../config.h` 或烧录工具 GUI 填写 | 第 4-8 行 | 用 ESP32 时必改 |
 
 ---
 
@@ -513,6 +515,57 @@ gsv/
 > **自行 DIY 接线？** 如果使用通用 ESP32-S3-DevKitC-1 + 面包板搭建，按上表接线即可。OLED 和按键为可选组件。
 
 ### 固件烧录（详细教程）
+
+#### 方式 C：一键烧录工具（GUI，最简单）
+
+> **零门槛！** 不需要安装 PlatformIO，不需要编辑代码，不需要命令行。适合只想快速烧录使用的用户。
+
+![MiniBox 一键烧录工具](esp32/flash_tool_screenshot.png)
+
+**1. 下载预编译固件**
+
+前往 [Releases 页面](https://github.com/Iroha-P/MiniBox/releases) 下载最新的 `minibox_v2.1.0_merged.bin`。
+
+**2. 安装依赖**
+
+```bash
+pip install esptool pyserial
+```
+
+**3. 运行烧录工具**
+
+```bash
+cd esp32
+python flash_tool.py
+```
+
+**4. 在 GUI 界面中操作**
+
+| 步骤 | 操作 |
+|------|------|
+| 选择串口 | USB 连接 ESP32 后点击「刷新」，自动检测 COM 口 |
+| 选择固件 | 点击「浏览...」选择下载的 `.bin` 文件 |
+| 填写 WiFi | 输入 WiFi SSID 和密码（必须是 2.4GHz） |
+| 填写服务器 | 服务器 IP 已自动检测本机 IP（运行 webui.py 的电脑） |
+| 开始烧录 | 点击「开始烧录」，等待完成即可 |
+
+> [!NOTE]
+> **关于 API Key 安全性**：烧录工具**不需要填写 API Key**。ESP32 只是一个录音+播放终端，所有 AI 处理（STT → LLM → TTS）都在 PC 服务器端完成。API Key 始终安全地保存在 PC 端的 `.api_key` 文件中，**永远不会写入 ESP32 硬件**，不存在泄露风险。
+>
+> ```
+> ESP32（只存 WiFi 信息 + 服务器 IP）→ WiFi → PC 服务器（API Key 在这里）→ 云端 LLM
+> ```
+
+**功能一览：**
+- 自动检测串口和本机 IP
+- WiFi 密码显示/隐藏切换
+- 烧录前可选擦除 Flash（首次建议勾选）
+- 实时进度条和日志输出
+- 「仅写入网络配置」— 换 WiFi 时无需重刷固件
+- 「读取芯片信息」— 验证 ESP32 连接状态
+- 配置自动保存，下次打开无需重填
+
+---
 
 #### 方式 A：PlatformIO CLI 命令行烧录（推荐）
 
